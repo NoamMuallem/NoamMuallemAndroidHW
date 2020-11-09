@@ -36,15 +36,18 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
 /*
- * to enable google sign in open Gradle tab
- * go to android signinReport
- * copy SHA1 to Firebase console.
- * in firebase go to authentication
- * sign in methods and click "Google"
- * then project settings (blue and underlined
+ * to enable google sign in:
+ *  get SHA1 from android studio
+ * 1. open Gradle tab on the top right in android studio
+ * 2. go to android signinReport
+ *  copy SHA1 to Firebase console.
+ *
+ * 4. in firebase go to authentication
+ * 5. in sign in methods click "Google"
+ * 6. click on 'project settings' (blue and underlined,
  * in the paragraph above the enable toggle)
- * scroll down an choose add fingerprint
- * past the SHA1 copped from signinReport
+ * 7. scroll down and choose add fingerprint
+ * 8. past the SHA1 copped from signinReport
  * Done!
  * */
 
