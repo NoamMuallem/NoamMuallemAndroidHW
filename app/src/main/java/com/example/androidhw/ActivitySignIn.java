@@ -35,7 +35,12 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
-/*
+/* CREATED BY NOAM MUALLEM (INITIALLY) FOR
+ * ANDROID DEVELOPMENT COURSE.
+ * THIS COMMENT IS FOR MY USE BECAUSE I CREATED A GIT
+ * REPOSITORY FOR BASE ANDROID APP WITH AUTHENTICATION
+ * (https://github.com/NoamMuallem/baseAndroidAppWithAuth)
+ *
  * to enable google sign in:
  *  get SHA1 from android studio
  * 1. open Gradle tab on the top right in android studio
