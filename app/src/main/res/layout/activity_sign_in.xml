@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:padding="20sp"
+tools:context=".ActivitySignIn">
+
+<!--    email input-->
+<com.google.android.material.textfield.TextInputLayout
+    android:id="@+id/sign_in_txf_email"
+    android:layout_width="match_parent"
+    android:layout_above="@+id/sign_in_txf_password"
+    android:layout_height="wrap_content">
+    <EditText
+        android:layout_marginBottom="10dp"
+        android:background="@color/white"
+        android:id="@+id/sign_in_edt_email"
+        android:inputType="textEmailAddress"
+        android:hint="Email"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+</com.google.android.material.textfield.TextInputLayout>
+
+<!--    password input-->
+<com.google.android.material.textfield.TextInputLayout
+    android:id="@+id/sign_in_txf_password"
+    android:layout_width="match_parent"
+    android:layout_centerVertical="true"
+    app:passwordToggleEnabled="true"
+    android:layout_height="wrap_content">
+    <EditText
+        android:background="@color/white"
+        android:layout_marginTop="10dp"
+        android:id="@+id/sign_in_edt_password"
+        android:inputType="textPassword"
+        android:hint="Password"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        />
+</com.google.android.material.textfield.TextInputLayout>
+
+<!--    submit button-->
+<Button
+    android:id="@+id/sign_in_btn_submit"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_centerHorizontal="true"
+    android:layout_marginTop="20dp"
+    android:layout_below="@+id/sign_in_txf_password"
+    android:text="sign in"/>
+
+<TextView
+    android:id="@+id/sign_in_lbl_password_recovery"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Forgot Your Password?"
+    android:layout_below="@id/sign_in_btn_submit"
+    android:layout_centerHorizontal="true"
+    android:textSize="15sp"
+    android:layout_marginTop="10dp"/>
+
+
+    <!--    google login-->
+    <com.google.android.gms.common.SignInButton
+        android:id="@+id/sign_in_btn_google_login"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="20dp"
+        android:layout_marginTop="20dp"
+        android:layout_below="@id/sign_in_lbl_password_recovery"
+        />
+
+    <TextView
+        android:id="@+id/sign_in_lbl_no_account"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:text="Don't Have An Account?"
+        android:layout_alignParentBottom="true"
+        android:gravity="center_horizontal" />
+</RelativeLayout>
