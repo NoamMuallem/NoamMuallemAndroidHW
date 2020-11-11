@@ -4,8 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -107,7 +105,7 @@ public class ActivitySignUp extends AppCompatActivity {
                             //dismiss progress dialog
                             pd.dismiss();
                             //TODO: save to realtime data base the user data
-                            startActivity(new Intent(ActivitySignUp.this, ActivityMenu.class));
+                            startActivity(new Intent(ActivitySignUp.this, ActivityGame.class));
                             finish();
                         } else {
                             //dismiss progress dialog

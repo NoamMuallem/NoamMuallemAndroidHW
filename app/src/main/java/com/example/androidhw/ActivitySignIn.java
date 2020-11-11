@@ -195,7 +195,7 @@ public class ActivitySignIn extends AppCompatActivity {
                             // Sign in success, update UI with the signed-in user's information
                             FirebaseUser user = mAuth.getCurrentUser();
                             pd.dismiss();
-                            startActivity(new Intent(ActivitySignIn.this, ActivityMenu.class));
+                            startActivity(new Intent(ActivitySignIn.this, ActivityGame.class));
                             finish();
                         } else {
                             // If sign in fails, display a message to the user.
@@ -293,7 +293,7 @@ public class ActivitySignIn extends AppCompatActivity {
                             // Sign in success, update UI with the signed-in user's information
                             FirebaseUser user = mAuth.getCurrentUser();
                             pd.dismiss();
-                            startActivity(new Intent(ActivitySignIn.this, ActivityMenu.class));
+                            startActivity(new Intent(ActivitySignIn.this, ActivityGame.class));
                             finish();
                         } else {
                             // If sign in fails, display a message to the user.

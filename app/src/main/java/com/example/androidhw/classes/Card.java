@@ -8,7 +8,7 @@ public class Card {
     public Card(int number, String shape) {
         this.number = number;
         this.shape = shape;
-        this.assetName = shape+number+".png";
+        this.assetName = shape+number;
     }
 
     public int getNumber() {
