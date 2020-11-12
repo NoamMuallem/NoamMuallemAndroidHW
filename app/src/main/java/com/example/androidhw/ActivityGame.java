@@ -48,7 +48,7 @@ import java.util.HashMap;
 public class ActivityGame extends AppCompatActivity {
 
     //the only relevant lines for the CORE HW are:
-    // 60-66, 92(99-110), 113-133, all the other lines are firebase related
+    // 60-66, 93(99-110), 113-137, all other code is firebase related
 
     //variable to indicate what we are editing in firebase
     private int playerNameEdit; //which player change name
@@ -152,7 +152,7 @@ public class ActivityGame extends AppCompatActivity {
                 //creating a dialog and build it
                 AlertDialog.Builder builder = new AlertDialog.Builder(ActivityGame.this);
                 //set title
-                builder.setTitle("Edit Profile");
+                builder.setTitle("Edit Players Data");
                 //set items to dialog
                 builder.setItems(options, new DialogInterface.OnClickListener() {
                     @Override
@@ -162,28 +162,28 @@ public class ActivityGame extends AppCompatActivity {
                             case 0: {
                                 //edit profile picture clicked
                                 playerImageEdit = 1; //indicate profile picture change
-                                pd.setMessage("Updating left Image");
+                                pd.setMessage("Updating Left Image");
                                 showImagePicDialog();
                             }
                             break;
                             case 1: {
-                                playerImageEdit = 2; //indicate cover photo change
+                                playerImageEdit = 2; //indicate the player that changing change
                                 //edit cover photo clicked
-                                pd.setMessage("Updating Profile Cover Photo");
+                                pd.setMessage("Updating Right Image");
                                 showImagePicDialog();
                             }
                             break;
                             case 2: {
                                 playerNameEdit = 1;
                                 //edit profile name clicked
-                                pd.setMessage("Updating Profile Name");
+                                pd.setMessage("Updating Left Name");
                                 showNameUpdateDialogAndUpload();
                             }
                             break;
                             case 3: {
                                 playerNameEdit = 2;
                                 //edit phone clicked
-                                pd.setMessage("Updating Profile Phone");
+                                pd.setMessage("Updating Right Name");
                                 showNameUpdateDialogAndUpload();
                             }
                             break;
