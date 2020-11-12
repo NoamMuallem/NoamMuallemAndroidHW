@@ -4,18 +4,26 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.squareup.picasso.Picasso;
+
 public class ActivityGameOver extends AppCompatActivity {
 
-    public static final String WINNER_NUM = "WINNER_NUM";
+    //data from previous intent
+    public static final String PLAYER_ONE_NAME = "WINNER_NAME"; //String
+    public static final String PLAYER_TWO_NAME = "IMAGE_URL_WINNER"; //String
+    public static final String WINNER = "WINNER_NUM"; //int
 
+    //views
     private Button game_over_btn_new_game;
     private TextView game_over_lbl_msg;
-    private int winner;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,11 +34,20 @@ public class ActivityGameOver extends AppCompatActivity {
     }
 
     private void init() {
-        //get winner from privies intent
-        winner = getIntent().getIntExtra(WINNER_NUM,3);
-        //inject winner in msg IF NEEDED (its a drew by default)
-        //TODO:take a string from last intent as a msg containing the player name
-        game_over_lbl_msg.setText("Congratulation " + winner + "You Wan!");
+        //initialize with data from last intent
+        int winner = getIntent().getIntExtra(WINNER,10);
+        if(winner == 1){
+                String name = getIntent().getStringExtra(PLAYER_ONE_NAME);
+                game_over_lbl_msg.setText("Congratulations " + name + " You Are The Winner");
+        }else if(winner == 2){
+                String name = getIntent().getStringExtra(PLAYER_TWO_NAME);
+                game_over_lbl_msg.setText("Congratulations " + name + " You Are The Winner");
+        }else{
+            String name1 = getIntent().getStringExtra(PLAYER_TWO_NAME);
+            String name2 = getIntent().getStringExtra(PLAYER_ONE_NAME);
+            game_over_lbl_msg.setText(name1 + " "+ name2 + " You Are In A Drew");
+        }
+
         //new game button click
         game_over_btn_new_game.setOnClickListener(new View.OnClickListener() {
             @Override

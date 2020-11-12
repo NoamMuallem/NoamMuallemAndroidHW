@@ -17,9 +17,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -28,8 +26,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.androidhw.classes.CardGame;
-import com.example.androidhw.classes.Deck;
-import com.example.androidhw.classes.Player;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -51,6 +47,9 @@ import java.util.HashMap;
 
 public class ActivityGame extends AppCompatActivity {
 
+    //the only relevant lines for the CORE HW are:
+    // 60-66, 92(99-110), 113-133, all the other lines are firebase related
+
     //variable to indicate what we are editing in firebase
     private int playerNameEdit; //which player change name
     private int playerImageEdit;//which player change image
@@ -63,69 +62,57 @@ public class ActivityGame extends AppCompatActivity {
     private ImageView game_imv_player1_card, game_imv_player2_card, game_imv_p1_avatar, game_imv_p2_avatar;
     private ImageButton game_button_play_turn;
     private FloatingActionButton profile_fab_edit_profile;
+    //cardGame
     private CardGame cardGame;
 
     //firebase
-    FirebaseAuth firebaseAuth;
-    FirebaseUser firebaseUser;
-    FirebaseDatabase firebaseDatabase;
-    DatabaseReference databaseReference;
+    private FirebaseAuth firebaseAuth;
+    private FirebaseUser firebaseUser;
+    private FirebaseDatabase firebaseDatabase;
+    private DatabaseReference databaseReference;
     //storage
-    StorageReference storageReference;
+    private StorageReference storageReference;
 
-    //permission constance
+    //permission constance - flags to indicate what the user chose to edit so i can generalize the function use
     private static final int CAMERA_REQUEST_CODE = 100;
     private static final int STORAGE_REQUEST_CODE = 200;
     private static final int IMAGE_PICK_GALLERY_CODE = 300;
     private static final int IMAGE_PICK_CAMERA_CODE = 400;
     //arrays of permissions to be requested
-    String cameraPermissions[];
-    String storagePermissions[];
+    private String cameraPermissions[];
+    private String storagePermissions[];
     //uri for picked image
     private Uri image_uri;
 
-    //*********************************permissions
-    //check if storage permissions is enabled or not
-    private boolean checkStoragePermissions(){
-        boolean result = ContextCompat.checkSelfPermission(ActivityGame.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == (PackageManager.PERMISSION_GRANTED);
-        return result;
-    }
-
-    //request runtime storage permission
-    private void requestStoragePermission(){
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(storagePermissions, STORAGE_REQUEST_CODE);
-        }
-    }
-
-    //check if storage permissions is enabled or not
-    private boolean checkCameraPermissions(){
-        boolean result = ContextCompat.checkSelfPermission(ActivityGame.this, Manifest.permission.CAMERA) == (PackageManager.PERMISSION_GRANTED);
-        boolean result1 = ContextCompat.checkSelfPermission(ActivityGame.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == (PackageManager.PERMISSION_GRANTED);
-        return result && result1;
-    }
-
-    //request runtime storage permission
-    private void requestCameraPermission(){
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(cameraPermissions, CAMERA_REQUEST_CODE);
-        }
-    }
-
+    //********************************initialization
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
-        findVies();
+        findViews();
         init();
         firebaseInit();
         //set assets from firebase
         updateViewsWithProfileData();
     }
 
+    private void findViews() {
+        game_lbl_score1 = findViewById(R.id.game_lbl_score1);
+        game_lbl_name1 = findViewById(R.id.game_lbl_name1);
+        game_lbl_score2 = findViewById(R.id.game_lbl_score2);
+        game_lbl_name2 = findViewById(R.id.game_lbl_name2);
+        game_imv_player1_card = findViewById(R.id.game_imv_player1_card);
+        game_imv_player2_card = findViewById(R.id.game_imv_player2_card);
+        game_button_play_turn = findViewById(R.id.game_button_play_turn);
+        profile_fab_edit_profile = findViewById(R.id.profile_fab_edit_profile);
+        game_imv_p1_avatar = findViewById(R.id.game_imv_p1_avatar);
+        game_imv_p2_avatar = findViewById(R.id.game_imv_p2_avatar);
+    }
+
     private void init() {
         //set new game
         cardGame = new CardGame();
+        //initialize p1/2imageUrl to "" so if its empty take default images
         //set click listener to play button
         game_button_play_turn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -133,10 +120,17 @@ public class ActivityGame extends AppCompatActivity {
                 if(cardGame.getNumTurns() >= 26){
                     //game is over
                     Intent gameOverIntent = new Intent(ActivityGame.this, ActivityGameOver.class);
-                    gameOverIntent.putExtra(ActivityGameOver.WINNER_NUM,cardGame.getWinner());
+                    //determent who is the winner and pass his name and image url
+                    gameOverIntent.putExtra(ActivityGameOver.PLAYER_ONE_NAME,game_lbl_name1.getText());
+                    gameOverIntent.putExtra(ActivityGameOver.PLAYER_TWO_NAME, game_lbl_name2.getText());
+                    gameOverIntent.putExtra(ActivityGameOver.WINNER,cardGame.getWinner());
                     startActivity(gameOverIntent);
                     finish();
                 }else{
+                    /*
+                    views - for easy update from inside cardGame
+                    context - for finding resources by name and not id
+                     */
                     cardGame.playATurn(game_imv_player1_card, game_lbl_score1, game_imv_player2_card, game_lbl_score2, ActivityGame.super.getBaseContext());
                 }
             }
@@ -183,14 +177,14 @@ public class ActivityGame extends AppCompatActivity {
                                 playerNameEdit = 1;
                                 //edit profile name clicked
                                 pd.setMessage("Updating Profile Name");
-                                showNameUpdateDialog();
+                                showNameUpdateDialogAndUpload();
                             }
                             break;
                             case 3: {
                                 playerNameEdit = 2;
                                 //edit phone clicked
                                 pd.setMessage("Updating Profile Phone");
-                                showNameUpdateDialog();
+                                showNameUpdateDialogAndUpload();
                             }
                             break;
                         }
@@ -212,110 +206,36 @@ public class ActivityGame extends AppCompatActivity {
         storageReference = FirebaseStorage.getInstance().getReference();//firebase storage reference
     }
 
-    //fetching info of current user by id
-    private void updateViewsWithProfileData() {
-        //using orderByChild query to get user that have uid that machs the current user uid
-        Query query = databaseReference.orderByChild("uid").equalTo(firebaseUser.getUid());
-        query.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                //checks until required data is back
-                for(DataSnapshot ds : snapshot.getChildren()){
-                    //get data
-                    String p1image = "" + ds.child("p1image").getValue();
-                    String p2image = "" + ds.child("p2image").getValue();
-                    String p1name = "" + ds.child("p1name").getValue();
-                    String p2name = "" + ds.child("p2name").getValue();
-
-                    //set data
-                    if(!TextUtils.isEmpty(p1name)){
-                        game_lbl_name1.setText(p1name);
-                    }
-                    if(!TextUtils.isEmpty(p2name)){
-                        game_lbl_name1.setText(p2name);
-                    }
-
-                    if(!TextUtils.isEmpty(p1image)){
-                        //to set profile image
-                        try{
-                            //if image is received
-                            Picasso.get().load(p1image).into(game_imv_p1_avatar);
-                        }catch(Exception e){
-                            //if there are any exceptions show default pic
-                            Picasso.get().load(R.drawable.smile).into(game_imv_p1_avatar);
-                        }
-                    }
-                    if(!TextUtils.isEmpty(p2image)){
-                        //to set profile image
-                        try{
-                            //if image is received
-                            Picasso.get().load(p2image).into(game_imv_p2_avatar);
-                        }catch(Exception e){
-                            //if there are any exceptions show default pic
-                            Picasso.get().load(R.drawable.excuse).into(game_imv_p2_avatar);
-                        }
-                    }
-                }
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
+    //*********************************permissions
+    //check if storage permissions is enabled or not
+    private boolean checkStoragePermissions(){
+        boolean result = ContextCompat.checkSelfPermission(ActivityGame.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == (PackageManager.PERMISSION_GRANTED);
+        return result;
     }
 
-    private void showNameUpdateDialog() {
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(ActivityGame.this);
-        alertDialog.setTitle("Update Name");
-        LinearLayout linearLayout = new LinearLayout(ActivityGame.this);
-        linearLayout.setOrientation(LinearLayout.VERTICAL);
-        linearLayout.setPadding(10,10,10,10);
-        //add edit text
-        EditText editText = new EditText(ActivityGame.this);
-        editText.setHint("Enter Name");
-        linearLayout.addView(editText);
-        alertDialog.setView(linearLayout);
-
-        //add button in dialog
-        alertDialog.setPositiveButton("Update", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                //input text from edit text
-                String value = editText.getText().toString().trim();
-                //validate that a user has entered something
-                if(!TextUtils.isEmpty(value)){
-                    pd.show();
-                    HashMap<String, Object> result = new HashMap<>();
-                    result.put("p"+playerNameEdit+"name", value);
-                    databaseReference.child(FirebaseAuth.getInstance().getUid()).updateChildren(result).addOnSuccessListener(new OnSuccessListener<Void>() {
-                        @Override
-                        public void onSuccess(Void aVoid) {
-                            pd.dismiss();
-                            Toast.makeText(ActivityGame.this,"Updated...",Toast.LENGTH_SHORT).show();
-                        }
-                    }).addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            pd.dismiss();
-                            Toast.makeText(ActivityGame.this,""+e.getMessage(),Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }else{
-                    Toast.makeText(ActivityGame.this,"Please Enter Name",Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-        alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-        //create and show dialog
-        alertDialog.create().show();
+    //request on runtime storage permission
+    private void requestStoragePermission(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestPermissions(storagePermissions, STORAGE_REQUEST_CODE);
+        }
     }
 
-    //show dialog to pick an image from gallery or take a new photo
+    //check if camera permissions is enabled or not
+    private boolean checkCameraPermissions(){
+        boolean result = ContextCompat.checkSelfPermission(ActivityGame.this, Manifest.permission.CAMERA) == (PackageManager.PERMISSION_GRANTED);
+        boolean result1 = ContextCompat.checkSelfPermission(ActivityGame.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == (PackageManager.PERMISSION_GRANTED);
+        return result && result1;
+    }
+
+    //request on runtime camera permission
+    private void requestCameraPermission(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestPermissions(cameraPermissions, CAMERA_REQUEST_CODE);
+        }
+    }
+
+    //*********************************choosing image from camera or storage
+    //show dialog to pick an image - gallery or camera
     private void showImagePicDialog() {
         //options to show in dialog
         String options[] = {"Camera","Gallery"};
@@ -355,7 +275,7 @@ public class ActivityGame extends AppCompatActivity {
         builder.create().show();
     }
 
-    //pick image from gallery
+    //intent for pick image from gallery
     private void pickFromGallery() {
         Intent galleryIntent = new Intent(Intent.ACTION_PICK);
         galleryIntent.setType("image/*");
@@ -380,7 +300,7 @@ public class ActivityGame extends AppCompatActivity {
         startActivityForResult(cameraIntent, IMAGE_PICK_CAMERA_CODE);
     }
 
-    //this methods runs when permission dialog closes with granted or denial access
+    //this methods runs when permission dialog closes with granted or denial access - only for the first times
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -425,16 +345,69 @@ public class ActivityGame extends AppCompatActivity {
             if(requestCode == IMAGE_PICK_GALLERY_CODE){
                 //image picked from gallery - get uri of image
                 image_uri = data.getData();
-                uploadProfileCoverPhoto(image_uri);
+                uploadImage(image_uri);
             }
             if(requestCode == IMAGE_PICK_CAMERA_CODE){
                 //image picked from camera - get uri of image
-                uploadProfileCoverPhoto(image_uri);
+                uploadImage(image_uri);
             }
         }
     }
 
-    private void uploadProfileCoverPhoto(Uri image_uri) {
+    //*********************************firebase related functionality
+    //fetching info of current user by id and update views
+    private void updateViewsWithProfileData() {
+        //using orderByChild query to get user that have uid that machs the current user uid
+        Query query = databaseReference.orderByChild("uid").equalTo(firebaseUser.getUid());
+        query.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                //checks until required data is back
+                for(DataSnapshot ds : snapshot.getChildren()){
+                    //get data
+                    String p1image = "" + ds.child("p1image").getValue();
+                    String p2image = "" + ds.child("p2image").getValue();
+                    String p1name = "" + ds.child("p1name").getValue();
+                    String p2name = "" + ds.child("p2name").getValue();
+
+                    //set data
+                    if(!TextUtils.isEmpty(p1name)){
+                        game_lbl_name1.setText(p1name);
+                    }
+                    if(!TextUtils.isEmpty(p2name)){
+                        game_lbl_name2.setText(p2name);
+                    }
+
+                    if(!TextUtils.isEmpty(p1image)){
+                        //to set profile image
+                        try{
+                            //if image is received
+                            Picasso.get().load(p1image).into(game_imv_p1_avatar);
+                        }catch(Exception e){
+                            //if there are any exceptions show default pic
+                            Picasso.get().load(R.drawable.smile).into(game_imv_p1_avatar);
+                        }
+                    }
+                    if(!TextUtils.isEmpty(p2image)){
+                        //to set profile image
+                        try{
+                            //if image is received
+                            Picasso.get().load(p2image).into(game_imv_p2_avatar);
+                        }catch(Exception e){
+                            //if there are any exceptions show default pic
+                            Picasso.get().load(R.drawable.excuse).into(game_imv_p2_avatar);
+                        }
+                    }
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+    private void uploadImage(Uri image_uri) {
         //show progress
         pd.show();
 
@@ -497,17 +470,54 @@ public class ActivityGame extends AppCompatActivity {
         });
     }
 
+    private void showNameUpdateDialogAndUpload() {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(ActivityGame.this);
+        alertDialog.setTitle("Update Name");
+        LinearLayout linearLayout = new LinearLayout(ActivityGame.this);
+        linearLayout.setOrientation(LinearLayout.VERTICAL);
+        linearLayout.setPadding(10,10,10,10);
+        //add edit text
+        EditText editText = new EditText(ActivityGame.this);
+        editText.setHint("Enter Name");
+        linearLayout.addView(editText);
+        alertDialog.setView(linearLayout);
 
-    private void findVies() {
-        game_lbl_score1 = findViewById(R.id.game_lbl_score1);
-        game_lbl_name1 = findViewById(R.id.game_lbl_name1);
-        game_lbl_score2 = findViewById(R.id.game_lbl_score2);
-        game_lbl_name2 = findViewById(R.id.game_lbl_name2);
-        game_imv_player1_card = findViewById(R.id.game_imv_player1_card);
-        game_imv_player2_card = findViewById(R.id.game_imv_player2_card);
-        game_button_play_turn = findViewById(R.id.game_button_play_turn);
-        profile_fab_edit_profile = findViewById(R.id.profile_fab_edit_profile);
-        game_imv_p1_avatar = findViewById(R.id.game_imv_p1_avatar);
-        game_imv_p2_avatar = findViewById(R.id.game_imv_p2_avatar);
+        //add button in dialog
+        alertDialog.setPositiveButton("Update", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //input text from edit text
+                String value = editText.getText().toString().trim();
+                //validate that a user has entered something
+                if(!TextUtils.isEmpty(value)){
+                    pd.show();
+                    HashMap<String, Object> result = new HashMap<>();
+                    result.put("p"+playerNameEdit+"name", value);
+                    databaseReference.child(FirebaseAuth.getInstance().getUid()).updateChildren(result).addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                            pd.dismiss();
+                            Toast.makeText(ActivityGame.this,"Updated...",Toast.LENGTH_SHORT).show();
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            pd.dismiss();
+                            Toast.makeText(ActivityGame.this,""+e.getMessage(),Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }else{
+                    Toast.makeText(ActivityGame.this,"Please Enter Name",Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        //create and show dialog
+        alertDialog.create().show();
     }
 }
