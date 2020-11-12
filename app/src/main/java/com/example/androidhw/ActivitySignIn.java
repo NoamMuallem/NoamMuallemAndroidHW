@@ -34,6 +34,10 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.HashMap;
 
 /* CREATED BY NOAM MUALLEM (INITIALLY) FOR
  * ANDROID DEVELOPMENT COURSE.
@@ -70,6 +74,8 @@ public class ActivitySignIn extends AppCompatActivity {
 
     //firebase auth
     private FirebaseAuth mAuth;
+    FirebaseDatabase database;
+    DatabaseReference myRef;
 
     //for sign in with google
     GoogleSignInOptions gso;
@@ -95,6 +101,10 @@ public class ActivitySignIn extends AppCompatActivity {
 
     //add listeners set up and firebase
     private void init() {
+        //firebase init
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("Users");
+
         //set up action bar
         ActionBar actionBar = getSupportActionBar();
         actionBar.setTitle("Sigh In");
@@ -195,6 +205,16 @@ public class ActivitySignIn extends AppCompatActivity {
                             // Sign in success, update UI with the signed-in user's information
                             FirebaseUser user = mAuth.getCurrentUser();
                             pd.dismiss();
+                            //check to see if first time - if first time save hime to db
+                            if(task.getResult().getAdditionalUserInfo().isNewUser()){
+                                HashMap<Object, String> hashMap = new HashMap<>();
+                                hashMap.put("uid",user.getUid());
+                                hashMap.put("p1name","");
+                                hashMap.put("p1image","");
+                                hashMap.put("p2name","");
+                                hashMap.put("p2image","");
+                                myRef.child(mAuth.getUid()).setValue(hashMap);
+                            }
                             startActivity(new Intent(ActivitySignIn.this, ActivityGame.class));
                             finish();
                         } else {

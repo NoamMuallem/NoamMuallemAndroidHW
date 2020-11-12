@@ -20,6 +20,10 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.HashMap;
 
 public class ActivitySignUp extends AppCompatActivity {
 
@@ -33,6 +37,8 @@ public class ActivitySignUp extends AppCompatActivity {
 
     //firebase
     private FirebaseAuth mAuth;
+    FirebaseDatabase database;
+    DatabaseReference myRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +62,8 @@ public class ActivitySignUp extends AppCompatActivity {
 
         //init firebase auth
         mAuth = FirebaseAuth.getInstance();
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("Users");
 
         //init progress bar
         pd = new ProgressDialog(this);
@@ -104,7 +112,15 @@ public class ActivitySignUp extends AppCompatActivity {
                             FirebaseUser user = mAuth.getCurrentUser();
                             //dismiss progress dialog
                             pd.dismiss();
-                            //TODO: save to realtime data base the user data
+                            //save user data
+                            HashMap <Object, String> hashMap = new HashMap<>();
+                            hashMap.put("uid",user.getUid());
+                            hashMap.put("p1name","");
+                            hashMap.put("p1image","");
+                            hashMap.put("p2name","");
+                            hashMap.put("p2image","");
+                            myRef.child(mAuth.getUid()).setValue(hashMap);
+                            //start game
                             startActivity(new Intent(ActivitySignUp.this, ActivityGame.class));
                             finish();
                         } else {
