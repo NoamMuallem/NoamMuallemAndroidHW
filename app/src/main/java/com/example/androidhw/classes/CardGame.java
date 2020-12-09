@@ -62,4 +62,12 @@ public class CardGame {
             return 0;
         }
     }
+
+    public int getPlayer1score(){
+        return this.player1.getScore();
+    }
+
+    public int getPlayer2score(){
+        return this.player2.getScore();
+    }
 }

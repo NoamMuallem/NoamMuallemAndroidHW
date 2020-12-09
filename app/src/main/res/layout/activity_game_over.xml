@@ -7,22 +7,32 @@
     android:layout_height="match_parent"
     android:gravity="center"
     android:orientation="vertical"
-    tools:context=".ActivityGameOver">
+    android:padding="50dp"
+    tools:context=".Activites.ActivityGameOver">
 
     <TextView
         android:id="@+id/game_over_lbl_msg"
         android:textAlignment="center"
+        android:layout_marginBottom="20dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Its A Drew!"
-        android:textSize="40sp"
+        android:textSize="30sp"
         android:gravity="center_horizontal" />
 
     <Button
-        android:id="@+id/game_over_btn_new_game"
-        android:layout_width="wrap_content"
+        android:id="@+id/game_over_btn_go_to_menu"
+        android:layout_width="match_parent"
+        android:layout_marginBottom="20dp"
         android:layout_height="wrap_content"
-        android:text="New Game"
+        android:text="menu"
+        android:textSize="20sp"/>
+
+    <Button
+        android:id="@+id/game_over_btn_go_to_top_ten"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Top Ten"
         android:textSize="20sp"/>
 
 </LinearLayout>

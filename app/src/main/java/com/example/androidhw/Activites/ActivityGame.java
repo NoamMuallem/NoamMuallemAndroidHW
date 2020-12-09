@@ -1,4 +1,4 @@
-package com.example.androidhw;
+package com.example.androidhw.Activites;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -12,6 +12,9 @@ import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,10 +25,19 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
+import com.example.androidhw.R;
 import com.example.androidhw.classes.CardGame;
+import com.example.androidhw.classes.Player;
+import com.example.androidhw.classes.Winner;
+import com.example.androidhw.utils.MySignal;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -41,9 +53,12 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
 
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class ActivityGame extends AppCompatActivity {
 
@@ -62,8 +77,14 @@ public class ActivityGame extends AppCompatActivity {
     private ImageView game_imv_player1_card, game_imv_player2_card, game_imv_p1_avatar, game_imv_p2_avatar;
     private ImageButton game_button_play_turn;
     private FloatingActionButton profile_fab_edit_profile;
+    private ProgressBar game_prb_progress;
+    private RelativeLayout game_rel_background;
     //cardGame
     private CardGame cardGame;
+    //for timer
+    private Timer timer;
+    private final int DELAY = 1000;
+    private boolean playing;
 
     //firebase
     private FirebaseAuth firebaseAuth;
@@ -107,9 +128,12 @@ public class ActivityGame extends AppCompatActivity {
         profile_fab_edit_profile = findViewById(R.id.profile_fab_edit_profile);
         game_imv_p1_avatar = findViewById(R.id.game_imv_p1_avatar);
         game_imv_p2_avatar = findViewById(R.id.game_imv_p2_avatar);
+        game_prb_progress = findViewById(R.id.game_prb_progress);
+        game_rel_background = findViewById(R.id.game_rel_background);
     }
 
     private void init() {
+        playing = false;
         //set new game
         cardGame = new CardGame();
         //initialize p1/2imageUrl to "" so if its empty take default images
@@ -117,21 +141,14 @@ public class ActivityGame extends AppCompatActivity {
         game_button_play_turn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(cardGame.getNumTurns() >= 26){
-                    //game is over
-                    Intent gameOverIntent = new Intent(ActivityGame.this, ActivityGameOver.class);
-                    //determent who is the winner and pass his name and image url
-                    gameOverIntent.putExtra(ActivityGameOver.PLAYER_ONE_NAME,game_lbl_name1.getText());
-                    gameOverIntent.putExtra(ActivityGameOver.PLAYER_TWO_NAME, game_lbl_name2.getText());
-                    gameOverIntent.putExtra(ActivityGameOver.WINNER,cardGame.getWinner());
-                    startActivity(gameOverIntent);
-                    finish();
+                playing = !playing;
+                //TODO:start timer
+                if(playing){
+                    game_button_play_turn.setImageResource(R.drawable.pause);
+                    playGame();
                 }else{
-                    /*
-                    views - for easy update from inside cardGame
-                    context - for finding resources by name and not id
-                     */
-                    cardGame.playATurn(game_imv_player1_card, game_lbl_score1, game_imv_player2_card, game_lbl_score2, ActivityGame.super.getBaseContext());
+                    game_button_play_turn.setImageResource(R.drawable.play);
+                    stopGame();
                 }
             }
         });
@@ -195,6 +212,17 @@ public class ActivityGame extends AppCompatActivity {
             }
         });
 
+        Glide.with(this).load(R.drawable.background).into(new SimpleTarget<Drawable>() {
+            @Override
+            public void onResourceReady(Drawable resource, Transition<? super Drawable> transition) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    game_rel_background.setBackground(resource);
+                }
+            }
+        });
+
+        //play sound for game start
+        MySignal.getInstance().play(R.raw.button_press);
     }
 
     private void firebaseInit() {
@@ -204,6 +232,70 @@ public class ActivityGame extends AppCompatActivity {
         //where in bucket users are stored
         databaseReference = firebaseDatabase.getReference("Users");
         storageReference = FirebaseStorage.getInstance().getReference();//firebase storage reference
+    }
+
+    @Override
+    protected void onStop() {
+        //don't stop game if game is playing (like when on pause and pick picture
+        //will raise an exception if game on pause and going into stopGame())
+        if(playing){
+            stopGame();
+        }
+        playing = false;
+        game_button_play_turn.setImageResource(R.drawable.play);
+        super.onStop();
+    }
+
+    //********************timer functions for game
+    private void playGame() {
+        timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        playATurn();
+                    }
+                });
+            }
+        },0,DELAY);
+
+    }
+
+    private void playATurn(){
+        if(cardGame.getNumTurns() >= 26){
+            //vibrate
+            MySignal.getInstance().vibrate();
+            //game is over
+            Intent gameOverIntent = new Intent(ActivityGame.this, ActivityGameOver.class);
+            //stop timer
+            timer.cancel();
+            //create a winner object
+            //score by the winner score, if its a drew by player 2 score
+            int score = cardGame.getWinner()==1?cardGame.getPlayer1score():cardGame.getWinner()==2?cardGame.getPlayer2score():cardGame.getPlayer2score();
+            //name contain winner's name or both names if its a drew
+            String name = cardGame.getWinner()==1?game_lbl_name1.getText().toString():cardGame.getWinner()==2?game_lbl_name2.getText().toString():game_lbl_name1.getText().toString() + " and " + game_lbl_name2.getText().toString();
+            Winner winner  = new Winner(score, name, cardGame.getPlayer1score()==cardGame.getPlayer2score());
+            //create a json string of winner object to send to winner intent
+            Gson gson = new Gson();
+            String winnerJson = gson.toJson(winner);
+            gameOverIntent.putExtra(ActivityGameOver.WINNER,winnerJson);
+            startActivity(gameOverIntent);
+            finish();
+        }else{
+            /*
+            views - for easy update from inside cardGame
+            context - for finding resources by name and not id
+             */
+            cardGame.playATurn(game_imv_player1_card, game_lbl_score1, game_imv_player2_card, game_lbl_score2, ActivityGame.super.getBaseContext());
+            //update progress bar
+            game_prb_progress.setProgress(game_prb_progress.getProgress()-1);
+        }
+    }
+
+    private void stopGame() {
+        timer.cancel();
     }
 
     //*********************************permissions
@@ -315,7 +407,7 @@ public class ActivityGame extends AppCompatActivity {
                         pickFromCamera();
                     }else{
                         //permission denied
-                        Toast.makeText(ActivityGame.this,"please enable camera & storage permissions",Toast.LENGTH_SHORT).show();
+                        MySignal.getInstance().MakeToastMsgLong("please enable camera & storage permissions");
                     }
                 }
             }
@@ -329,7 +421,7 @@ public class ActivityGame extends AppCompatActivity {
                         pickFromGallery();
                     }else{
                         //permission denied
-                        Toast.makeText(ActivityGame.this,"please enable storage permissions",Toast.LENGTH_SHORT).show();
+                        MySignal.getInstance().MakeToastMsgShort("please enable storage permissions");
                     }
                 }
             }
@@ -441,14 +533,14 @@ public class ActivityGame extends AppCompatActivity {
                         public void onSuccess(Void aVoid) {
                             //url of image stored in Users realtime database successfully - dismiss progress bar
                             pd.dismiss();
-                            Toast.makeText(ActivityGame.this,"image updated...",Toast.LENGTH_SHORT).show();
+                            MySignal.getInstance().MakeToastMsgShort("image updated...");
                         }
                     }).addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
                             //error adding url to realtime database for user - dismiss progressbar
                             pd.dismiss();
-                            Toast.makeText(ActivityGame.this,"error updating image...",Toast.LENGTH_SHORT).show();
+                            MySignal.getInstance().MakeToastMsgShort("error updating image...");
 
                         }
                     });
@@ -456,7 +548,7 @@ public class ActivityGame extends AppCompatActivity {
                 }else{
                     //error in uploading to storage
                     pd.dismiss();
-                    Toast.makeText(ActivityGame.this,"error in image uploading",Toast.LENGTH_SHORT).show();
+                    MySignal.getInstance().MakeToastMsgShort("error in image uploading");
                 }
             }
         }).addOnFailureListener(new OnFailureListener() {
@@ -464,7 +556,7 @@ public class ActivityGame extends AppCompatActivity {
             public void onFailure(@NonNull Exception e) {
                 //there was an error(s), get and show error, dismiss progress dialog
                 pd.dismiss();
-                Toast.makeText(ActivityGame.this,e.getMessage(),Toast.LENGTH_SHORT).show();
+                MySignal.getInstance().MakeToastMsgLong(e.getMessage());
 
             }
         });
@@ -497,17 +589,17 @@ public class ActivityGame extends AppCompatActivity {
                         @Override
                         public void onSuccess(Void aVoid) {
                             pd.dismiss();
-                            Toast.makeText(ActivityGame.this,"Updated...",Toast.LENGTH_SHORT).show();
+                            MySignal.getInstance().MakeToastMsgShort("Updated...");
                         }
                     }).addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
                             pd.dismiss();
-                            Toast.makeText(ActivityGame.this,""+e.getMessage(),Toast.LENGTH_SHORT).show();
+                            MySignal.getInstance().MakeToastMsgLong(""+e.getMessage());
                         }
                     });
                 }else{
-                    Toast.makeText(ActivityGame.this,"Please Enter Name",Toast.LENGTH_SHORT).show();
+                    MySignal.getInstance().MakeToastMsgShort("Please Enter Name");
                 }
             }
         });

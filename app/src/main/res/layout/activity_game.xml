@@ -1,14 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
+    android:id="@+id/game_rel_background"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:padding="10dp"
     android:layout_height="match_parent"
-    tools:context=".ActivityGame">
+    tools:context=".Activites.ActivityGame">
+
+    <ProgressBar
+        android:id="@+id/game_prb_progress"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_width="300dp"
+        android:layout_height="20dp"
+        android:layout_marginBottom="10dp"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:progress="26"
+        android:max="26"/>
 
     <LinearLayout
+        android:layout_below="@id/game_prb_progress"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
@@ -16,7 +29,7 @@
 
     <LinearLayout
         android:layout_height="0dp"
-        android:layout_weight="4"
+        android:layout_weight="3"
         android:layout_width="match_parent">
 
         <LinearLayout
@@ -108,10 +121,11 @@
     <ImageButton
         android:id="@+id/game_button_play_turn"
         android:layout_width="wrap_content"
-        android:background="@color/white"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:src="@drawable/play"
+        android:backgroundTintMode="src_over"
+        android:background="@null"
         />
 
     </LinearLayout>

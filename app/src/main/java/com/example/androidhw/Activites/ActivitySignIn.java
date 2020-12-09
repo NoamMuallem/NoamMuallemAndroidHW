@@ -1,4 +1,4 @@
-package com.example.androidhw;
+package com.example.androidhw.Activites;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -19,6 +19,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.androidhw.R;
+import com.example.androidhw.utils.MySignal;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -28,7 +30,6 @@ import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -187,7 +188,7 @@ public class ActivitySignIn extends AppCompatActivity {
                 firebaseAuthWithGoogle(account.getIdToken());
             } catch (ApiException e) {
                 // Google Sign In failed, update UI appropriately
-                Toast.makeText(ActivitySignIn.this,"Google Sign In failed",Toast.LENGTH_SHORT).show();
+                MySignal.getInstance().MakeToastMsgLong("Google Sign In failed");
             }
         }
     }
@@ -215,12 +216,13 @@ public class ActivitySignIn extends AppCompatActivity {
                                 hashMap.put("p2image","");
                                 myRef.child(mAuth.getUid()).setValue(hashMap);
                             }
-                            startActivity(new Intent(ActivitySignIn.this, ActivityGame.class));
+                            startActivity(new Intent(ActivitySignIn.this, ActivityMenu.class));
                             finish();
                         } else {
                             // If sign in fails, display a message to the user.
                             pd.dismiss();
-                            Toast.makeText(ActivitySignIn.this,"Authentication Failed",Toast.LENGTH_SHORT).show();
+                            MySignal.getInstance().MakeToastMsgShort("Authentication Failed...");
+                            MySignal.getInstance().MakeToastMsgLong(task.getException().getMessage());
                         }
                     }
                 });
@@ -284,9 +286,9 @@ public class ActivitySignIn extends AppCompatActivity {
             public void onComplete(@NonNull Task<Void> task) {
                 pd.dismiss();
                 if(task.isSuccessful()){
-                    Toast.makeText(ActivitySignIn.this,"Email sent",Toast.LENGTH_SHORT).show();
+                    MySignal.getInstance().MakeToastMsgShort("Email sent");
                 }else{
-                    Toast.makeText(ActivitySignIn.this,"Failed to send Email",Toast.LENGTH_SHORT).show();
+                    MySignal.getInstance().MakeToastMsgShort("Failed to send Email");
                 }
             }
         }).addOnFailureListener(new OnFailureListener() {
@@ -294,7 +296,7 @@ public class ActivitySignIn extends AppCompatActivity {
             public void onFailure(@NonNull Exception e) {
                 pd.dismiss();
                 //get and show proper error massage
-                Toast.makeText(ActivitySignIn.this,""+e.getMessage(),Toast.LENGTH_SHORT).show();
+                MySignal.getInstance().MakeToastMsgLong(""+e.getMessage());
             }
         });
 
@@ -313,13 +315,12 @@ public class ActivitySignIn extends AppCompatActivity {
                             // Sign in success, update UI with the signed-in user's information
                             FirebaseUser user = mAuth.getCurrentUser();
                             pd.dismiss();
-                            startActivity(new Intent(ActivitySignIn.this, ActivityGame.class));
+                            startActivity(new Intent(ActivitySignIn.this, ActivityMenu.class));
                             finish();
                         } else {
                             // If sign in fails, display a message to the user.
                             pd.dismiss();
-                            Toast.makeText(ActivitySignIn.this, "Authentication failed.",
-                                    Toast.LENGTH_SHORT).show();
+                            MySignal.getInstance().MakeToastMsgShort("Authentication failed...");
                         }
                     }
                 }).addOnFailureListener(new OnFailureListener(){
@@ -327,7 +328,7 @@ public class ActivitySignIn extends AppCompatActivity {
             public void onFailure(@NonNull Exception e) {
                 //error, dismiss progress dialog and get and show the error massage
                 pd.dismiss();
-                Toast.makeText(ActivitySignIn.this,""+e.getMessage(), Toast.LENGTH_SHORT).show();
+                MySignal.getInstance().MakeToastMsgLong(""+e.getMessage());
             }
         });
     }

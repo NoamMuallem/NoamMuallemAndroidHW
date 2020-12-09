@@ -1,4 +1,4 @@
-package com.example.androidhw;
+package com.example.androidhw.Activites;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -14,6 +14,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.androidhw.R;
+import com.example.androidhw.utils.MySignal;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
@@ -121,14 +123,13 @@ public class ActivitySignUp extends AppCompatActivity {
                             hashMap.put("p2image","");
                             myRef.child(mAuth.getUid()).setValue(hashMap);
                             //start game
-                            startActivity(new Intent(ActivitySignUp.this, ActivityGame.class));
+                            startActivity(new Intent(ActivitySignUp.this, ActivityMenu.class));
                             finish();
                         } else {
                             //dismiss progress dialog
                             pd.dismiss();
                             // If sign in fails, display a message to the user.
-                            Toast.makeText(ActivitySignUp.this, "Authentication failed.",
-                                    Toast.LENGTH_SHORT).show();
+                            MySignal.getInstance().MakeToastMsgLong("Authentication failed.");
                         }
                     }
                 }).addOnFailureListener(new OnFailureListener() {
@@ -137,7 +138,7 @@ public class ActivitySignUp extends AppCompatActivity {
                 //dismiss progress dialog
                 pd.dismiss();
                 //error, get error and display it
-                Toast.makeText(ActivitySignUp.this,""+e.getMessage(),Toast.LENGTH_SHORT).show();
+                MySignal.getInstance().MakeToastMsgShort(""+e.getMessage());
             }
         });
     }

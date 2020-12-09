@@ -1,4 +1,4 @@
-package com.example.androidhw;
+package com.example.androidhw.Activites;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+
+import com.example.androidhw.R;
 
 public class ActivityMain extends AppCompatActivity {
 

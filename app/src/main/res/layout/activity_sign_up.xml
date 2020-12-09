@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="20sp"
-    tools:context=".ActivitySignUp">
+    tools:context=".Activites.ActivitySignUp">
 
 <!--    email input-->
     <com.google.android.material.textfield.TextInputLayout
