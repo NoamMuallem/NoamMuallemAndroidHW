@@ -34,6 +34,7 @@ import com.example.androidhw.R;
 import com.example.androidhw.classes.CardGame;
 import com.example.androidhw.classes.Winner;
 import com.example.androidhw.utils.MySignal;
+import com.example.androidhw.utils.PermissionManager;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -90,17 +91,6 @@ public class ActivityGame extends AppCompatActivity {
     //storage
     private StorageReference storageReference;
 
-    //permission constance - flags to indicate what the user chose to edit so i can generalize the function use
-    private static final int CAMERA_REQUEST_CODE = 100;
-    private static final int STORAGE_REQUEST_CODE = 200;
-    private static final int IMAGE_PICK_GALLERY_CODE = 300;
-    private static final int IMAGE_PICK_CAMERA_CODE = 400;
-    //arrays of permissions to be requested
-    private String cameraPermissions[];
-    private String storagePermissions[];
-    //uri for picked image
-    private Uri image_uri;
-
     //********************************initialization
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -138,7 +128,6 @@ public class ActivityGame extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 playing = !playing;
-                //TODO:start timer
                 if (playing) {
                     game_button_play_turn.setImageResource(R.drawable.pause);
                     playGame();
@@ -149,12 +138,11 @@ public class ActivityGame extends AppCompatActivity {
             }
         });
 
-        //init permissions
-        cameraPermissions = new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-        storagePermissions = new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-
         //progress dialog
         pd = new ProgressDialog(ActivityGame.this);
+
+        //final copy of the activity
+        final AppCompatActivity activity = this;
 
         //set edit floating bubble listener
         profile_fab_edit_profile.setOnClickListener(new View.OnClickListener() {
@@ -176,14 +164,14 @@ public class ActivityGame extends AppCompatActivity {
                                 //edit profile picture clicked
                                 playerImageEdit = 1; //indicate profile picture change
                                 pd.setMessage("Updating Left Image");
-                                showImagePicDialog();
+                                PermissionManager.getInstance().showImagePicDialog(activity);
                             }
                             break;
                             case 1: {
                                 playerImageEdit = 2; //indicate the player that changing change
                                 //edit cover photo clicked
                                 pd.setMessage("Updating Right Image");
-                                showImagePicDialog();
+                                PermissionManager.getInstance().showImagePicDialog(activity);
                             }
                             break;
                             case 2: {
@@ -294,135 +282,37 @@ public class ActivityGame extends AppCompatActivity {
         timer.cancel();
     }
 
-    //*********************************permissions
-    //check if storage permissions is enabled or not
-    private boolean checkStoragePermissions() {
-        boolean result = ContextCompat.checkSelfPermission(ActivityGame.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == (PackageManager.PERMISSION_GRANTED);
-        return result;
-    }
-
-    //request on runtime storage permission
-    private void requestStoragePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(storagePermissions, STORAGE_REQUEST_CODE);
-        }
-    }
-
-    //check if camera permissions is enabled or not
-    private boolean checkCameraPermissions() {
-        boolean result = ContextCompat.checkSelfPermission(ActivityGame.this, Manifest.permission.CAMERA) == (PackageManager.PERMISSION_GRANTED);
-        boolean result1 = ContextCompat.checkSelfPermission(ActivityGame.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == (PackageManager.PERMISSION_GRANTED);
-        return result && result1;
-    }
-
-    //request on runtime camera permission
-    private void requestCameraPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(cameraPermissions, CAMERA_REQUEST_CODE);
-        }
-    }
-
-    //*********************************choosing image from camera or storage
-    //show dialog to pick an image - gallery or camera
-    private void showImagePicDialog() {
-        //options to show in dialog
-        String options[] = {"Camera", "Gallery"};
-        //alert dialog
-        AlertDialog.Builder builder = new AlertDialog.Builder(ActivityGame.this);
-        //set title
-        builder.setTitle("Choose Image Source");
-        //set items to dialog
-        builder.setItems(options, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                //handle dialog items click
-                switch (which) {
-                    case 0: {
-                        //Take a photo
-                        if (!checkCameraPermissions()) {
-                            requestCameraPermission();
-                        } else {
-                            pickFromCamera();
-                        }
-                    }
-                    break;
-                    case 1: {
-                        //Choose from gallery
-                        if (!checkStoragePermissions()) {
-                            requestStoragePermission();
-                        } else {
-                            pickFromGallery();
-                        }
-                    }
-                    break;
-
-                }
-            }
-        });
-        //create dialog
-        builder.create().show();
-    }
-
-    //intent for pick image from gallery
-    private void pickFromGallery() {
-        Intent galleryIntent = new Intent(Intent.ACTION_PICK);
-        galleryIntent.setType("image/*");
-        //when activity finish return this code - so when onRequestPermissionsResult will start when
-        //activity is done we will know from when it opened and if we take an image from camera or storage
-        startActivityForResult(galleryIntent, IMAGE_PICK_GALLERY_CODE);
-    }
-
-    //intent for picking image from camera
-    private void pickFromCamera() {
-        ContentValues values = new ContentValues();
-        values.put(MediaStore.Images.Media.TITLE, "Temp Pic");
-        values.put(MediaStore.Images.Media.DESCRIPTION, "Temp Description");
-        //put image uri
-        image_uri = ActivityGame.this.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-
-        //intent to start camera
-        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, image_uri);
-        //when activity finish return this code - so when onRequestPermissionsResult will start when
-        //activity is done we will know from when it opened and if we take an image from camera or storage
-        startActivityForResult(cameraIntent, IMAGE_PICK_CAMERA_CODE);
-    }
-
     //this methods runs when permission dialog closes with granted or denial access - only for the first times
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case CAMERA_REQUEST_CODE: {
+            if(PermissionManager.getInstance().getCameraRequestCode() == requestCode) {
                 //picking from camera - check we have permissions
                 if (grantResults.length > 0) {
                     boolean cameraAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
                     boolean writeStorageAccepted = grantResults[1] == PackageManager.PERMISSION_GRANTED;
                     if (cameraAccepted && writeStorageAccepted) {
                         //permission granted
-                        pickFromCamera();
+                        PermissionManager.getInstance().pickFromCamera(this);
                     } else {
                         //permission denied
                         MySignal.getInstance().MakeToastMsgLong("please enable camera & storage permissions");
                     }
                 }
             }
-            break;
-            case STORAGE_REQUEST_CODE: {
+            else if(PermissionManager.getInstance().getStorageRequestCode()==requestCode) {
                 //picking from gallery - check we have permissions
                 if (grantResults.length > 0) {
                     boolean writeStorageAccepted = grantResults[1] == PackageManager.PERMISSION_GRANTED;
                     if (writeStorageAccepted) {
                         //permission granted
-                        pickFromGallery();
+                        PermissionManager.getInstance().pickFromGallery(this);
                     } else {
                         //permission denied
                         MySignal.getInstance().MakeToastMsgShort("please enable storage permissions");
                     }
                 }
             }
-            break;
-        }
     }
 
     //this method will run after picking image from gallery or camera
@@ -430,14 +320,14 @@ public class ActivityGame extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
-            if (requestCode == IMAGE_PICK_GALLERY_CODE) {
+            if (requestCode == PermissionManager.getInstance().getImagePickGalleryCode()) {
                 //image picked from gallery - get uri of image
-                image_uri = data.getData();
-                uploadImage(image_uri);
+                PermissionManager.getInstance().setImage_uri(data.getData());
+                uploadImage(PermissionManager.getInstance().getImage_uri());
             }
-            if (requestCode == IMAGE_PICK_CAMERA_CODE) {
+            if (requestCode == PermissionManager.getInstance().getImagePickCameraCode()) {
                 //image picked from camera - get uri of image
-                uploadImage(image_uri);
+                uploadImage(PermissionManager.getInstance().getImage_uri());
             }
         }
     }

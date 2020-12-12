@@ -20,6 +20,7 @@ import android.widget.Toast;
 import com.example.androidhw.R;
 import com.example.androidhw.classes.Winner;
 import com.example.androidhw.utils.MySignal;
+import com.example.androidhw.utils.PermissionManager;
 import com.example.androidhw.utils.SP;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -36,7 +37,7 @@ public class ActivityGameOver extends AppCompatActivity{
     public static final String WINNER = "WINNER"; //String
 
     //for permissions
-    private static final int LOCATION_REQUEST_CODE = 100;
+    //private static final int LOCATION_REQUEST_CODE = 100;
 
     //views
     private Button game_over_btn_go_to_menu, game_over_btn_go_to_top_ten;
@@ -111,8 +112,8 @@ public class ActivityGameOver extends AppCompatActivity{
         //check to see if entered the top ten
         if (ttArray.size() < 10 || ttArray.get(9).getScore() <= winner.getScore()) {
             //get current location
-            if (!checkLocationPermissions()) {
-                requestLocationPermission();
+            if (!PermissionManager.getInstance().checkLocationPermissions(this)) {
+                PermissionManager.getInstance().requestLocationPermission(this);
             } else {
                 grabLocation();
             }
@@ -136,27 +137,11 @@ public class ActivityGameOver extends AppCompatActivity{
         MySignal.getInstance().MakeToastMsgLong("congratulations, new record!");
     }
 
-    //##############################################location and permission
-
-    //check if location permissions is enabled or not
-    private boolean checkLocationPermissions() {
-        boolean result = ContextCompat.checkSelfPermission(ActivityGameOver.this, Manifest.permission.ACCESS_FINE_LOCATION) == (PackageManager.PERMISSION_GRANTED);
-        return result;
-    }
-
-    //request on runtime location permission
-    private void requestLocationPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
-        }
-    }
-
     //when location permission window close (with approve or deny)
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case LOCATION_REQUEST_CODE: {
+            if(PermissionManager.getInstance().getLocationRequestCode() == requestCode) {
                 //location - check we have permissions
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     //permission granted
@@ -166,8 +151,6 @@ public class ActivityGameOver extends AppCompatActivity{
                     MySignal.getInstance().MakeToastMsgLong("please enable location permissions to enter to top ten table");
                 }
             }
-            break;
-        }
     }
 
     //take location data, *****also executing insertNewWinner***** (to avoid extra callbacks)

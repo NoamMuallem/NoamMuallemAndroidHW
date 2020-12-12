@@ -3,6 +3,7 @@ package com.example.androidhw.Activites;
 import android.app.Application;
 
 import com.example.androidhw.utils.MySignal;
+import com.example.androidhw.utils.PermissionManager;
 import com.example.androidhw.utils.SP;
 
 //this class will be instantiated when app starts
@@ -15,6 +16,7 @@ public class App extends Application {
 
         SP.init(this);
         MySignal.init(this);
+        PermissionManager.init(this);
     }
 
 }
