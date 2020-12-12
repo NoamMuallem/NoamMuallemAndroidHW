@@ -42,9 +42,6 @@ public class ActivityGameOver extends AppCompatActivity{
     private Button game_over_btn_go_to_menu, game_over_btn_go_to_top_ten;
     private TextView game_over_lbl_msg;
 
-    //location
-    private double alt, lon;
-
     //winner from game activity
     private Winner winner;
 
@@ -128,7 +125,7 @@ public class ActivityGameOver extends AppCompatActivity{
         ttArray.add(winner);
         //sort
         Collections.sort(ttArray);
-        //remove redundant
+        //remove redundant - only if size of ttArray is 11, else throw null pointer exception on remove(10)
         if (ttArray.size() == 11) {
             ttArray.remove(10);
         }

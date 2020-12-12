@@ -6,14 +6,22 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.FrameLayout;
 
-import com.example.androidhw.Fragments.FragmentMap;
+import com.example.androidhw.Fragments.FragmentMaps;
 import com.example.androidhw.Fragments.FragmentScores;
 import com.example.androidhw.R;
 import com.example.androidhw.callbacks.LocationCallback;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 public class ActivityTopTen extends AppCompatActivity implements LocationCallback {
 
     private FrameLayout tt_frl_scores, tt_frl_map;
+    private FragmentMaps fragmentMaps;
+    private FragmentScores fragmentScores;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,7 +29,11 @@ public class ActivityTopTen extends AppCompatActivity implements LocationCallbac
         setContentView(R.layout.activity_top_ten);
         findViews();
 
-        FragmentScores fragmentScores = new FragmentScores(this);
+        fragmentMaps = new FragmentMaps();
+        getSupportFragmentManager().beginTransaction().add(R.id.tt_frl_map,fragmentMaps).commit();
+
+
+        fragmentScores = new FragmentScores(this);
         getSupportFragmentManager().beginTransaction().add(R.id.tt_frl_scores,fragmentScores).commit();
     }
 
@@ -32,6 +44,13 @@ public class ActivityTopTen extends AppCompatActivity implements LocationCallbac
 
     @Override
     public void getLocation(double lon, double lat, String name) {
-        Log.d("pttt","from topTenActivity: " + lon + " "+ lat);
+        //clear privies markers
+        fragmentMaps.getGoogleMap().clear();
+        //create new location and marker
+        LatLng location = new LatLng(lat, lon);
+        fragmentMaps.getGoogleMap().addMarker(new MarkerOptions().position(location).title(name));
+        //view and zoom changes
+        fragmentMaps.getGoogleMap().moveCamera(CameraUpdateFactory.newLatLng(location));
+        fragmentMaps.getGoogleMap().setMinZoomPreference((float)250.50);
     }
 }

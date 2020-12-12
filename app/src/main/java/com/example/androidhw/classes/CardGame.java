@@ -19,10 +19,11 @@ public class CardGame {
         this.player1 = new Player(this.deck.getFirstHalf());
         this.player2 = new Player(this.deck.getSecondHalf());
         //initialize turns, gameOver and winner
-        int numTurns = 0;
+        this.numTurns = 0;
     }
 
-    public void playATurn(ImageView card1image, TextView player1Score, ImageView card2image, TextView player2Score, Context context){
+    public void playATurn(ImageView card1image, TextView player1Score, ImageView card2image,
+                          TextView player2Score, Context context){
         //get cards from decks
         Card player1card = player1.drew();
         Card player2card = player2.drew();
