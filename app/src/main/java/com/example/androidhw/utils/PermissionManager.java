@@ -56,7 +56,7 @@ public class PermissionManager {
         }
     }
 
-    ///////////////////methods
+    ///////////////////image permissions///////////////////////////////////////////////////////////////////////
     //check if storage permissions is enabled or not
     public boolean checkStoragePermissions() {
         boolean result = ContextCompat.checkSelfPermission(this.context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == (PackageManager.PERMISSION_GRANTED);
@@ -65,6 +65,9 @@ public class PermissionManager {
 
     //request on runtime storage permission
     public void requestStoragePermission(AppCompatActivity activity) {
+        /* to be used with (in manifest):
+        <uses-permission android:name="android.permission.CAMERA" />
+        <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />*/
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestPermissions(activity ,new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_REQUEST_CODE);
         }
@@ -78,18 +81,20 @@ public class PermissionManager {
     }
 
     //request on runtime camera permission
+    /* to be used with (in manifest):
+        <uses-permission android:name="android.permission.CAMERA" />*/
     public void requestCameraPermission(AppCompatActivity activity) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestPermissions(activity, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, CAMERA_REQUEST_CODE);
         }
     }
 
+    ///////////////image tools - intent for picking image and dialog to choose gallery or camera
     //intent for pick image from gallery
     public void pickFromGallery(AppCompatActivity activity) {
         Intent galleryIntent = new Intent(Intent.ACTION_PICK);
         galleryIntent.setType("image/*");
-        //when activity finish return this code - so when onRequestPermissionsResult will start when
-        //activity is done we will know from when it opened and if we take an image from camera or storage
+        //when activity finish return this code - start onRequestPermissionsResult will start
         activity.startActivityForResult(galleryIntent, IMAGE_PICK_GALLERY_CODE);
     }
 
@@ -104,22 +109,8 @@ public class PermissionManager {
         //intent to start camera
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, image_uri);
-        //when activity finish return this code - so when onRequestPermissionsResult will start when
-        //activity is done we will know from when it opened and if we take an image from camera or storage
+        //when activity finish return this code - so onRequestPermissionsResult will start
         activity.startActivityForResult(cameraIntent, IMAGE_PICK_CAMERA_CODE);
-    }
-
-    //check if location permissions is enabled or not
-    public boolean checkLocationPermissions(AppCompatActivity activity) {
-        boolean result = ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) == (PackageManager.PERMISSION_GRANTED);
-        return result;
-    }
-
-    //request on runtime location permission
-    public void requestLocationPermission(AppCompatActivity activity) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            activity.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
-        }
     }
 
     //show dialog to pick an image - gallery or camera
@@ -164,6 +155,24 @@ public class PermissionManager {
         builder.create().show();
     }
 
+    /////////////////////location permissions///////////////////////////////////////////////////////////
+    //check if location permissions is enabled or not
+    public boolean checkLocationPermissions(AppCompatActivity activity) {
+        boolean result = ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) == (PackageManager.PERMISSION_GRANTED);
+        return result;
+    }
+
+    //request on runtime location permission
+    /*
+    to be used with (in manifest):
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />*/
+    public void requestLocationPermission(AppCompatActivity activity) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            activity.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
+        }
+    }
+
+    /////////////////getters and setters
     public static int getCameraRequestCode() {
         return CAMERA_REQUEST_CODE;
     }

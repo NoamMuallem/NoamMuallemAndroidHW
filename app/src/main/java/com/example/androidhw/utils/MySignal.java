@@ -36,6 +36,9 @@ public class MySignal {
     }
 
     public void vibrate() {
+        /*
+        to be used with (in manifest):
+        <uses-permission android:name="android.permission.VIBRATE" />*/
         Vibrator v = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             v.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
@@ -50,11 +53,11 @@ public class MySignal {
         mp.start();
     }
 
-    public void MakeToastMsgShort(String msg){
+    public void shortToast(String msg){
         Toast.makeText(context,msg,Toast.LENGTH_SHORT).show();
     }
 
-    public void MakeToastMsgLong(String msg){
+    public void longToast(String msg){
         Toast.makeText(context,msg,Toast.LENGTH_LONG).show();
     }
 }

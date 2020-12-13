@@ -3,19 +3,15 @@ package com.example.androidhw.Activites;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.androidhw.R;
 import com.example.androidhw.classes.Winner;
@@ -134,7 +130,7 @@ public class ActivityGameOver extends AppCompatActivity{
         for (int i = 0; i < ttArray.size(); i++) {
             SP.getInstance().putString(i + "", gson.toJson(ttArray.get(i), Winner.class));
         }
-        MySignal.getInstance().MakeToastMsgLong("congratulations, new record!");
+        MySignal.getInstance().longToast("congratulations, new record!");
     }
 
     //when location permission window close (with approve or deny)
@@ -148,7 +144,7 @@ public class ActivityGameOver extends AppCompatActivity{
                     grabLocation();
                 } else {
                     //permission denied
-                    MySignal.getInstance().MakeToastMsgLong("please enable location permissions to enter to top ten table");
+                    MySignal.getInstance().longToast("please enable location permissions to enter to top ten table");
                 }
             }
     }
@@ -170,7 +166,7 @@ public class ActivityGameOver extends AppCompatActivity{
                             insertNewWinner();
                             return;
                         }else{
-                            MySignal.getInstance().MakeToastMsgLong("could not get location");
+                            MySignal.getInstance().longToast("could not get location");
                         }
                     }
                 });

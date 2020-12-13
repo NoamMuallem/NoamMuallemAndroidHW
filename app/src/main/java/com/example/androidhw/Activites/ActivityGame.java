@@ -1,9 +1,7 @@
 package com.example.androidhw.Activites;
 
-import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -11,7 +9,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
@@ -25,7 +22,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
@@ -59,14 +55,11 @@ import java.util.TimerTask;
 
 public class ActivityGame extends AppCompatActivity {
 
-    //the only relevant lines for the CORE HW are:
-    // 60-66, 93(99-110), 113-137, all other code is firebase related
-
     //variable to indicate what we are editing in firebase
     private int playerNameEdit; //which player change name
     private int playerImageEdit;//which player change image
 
-    //progress dialog for image uploading loading
+    //progress dialog for image uploading
     ProgressDialog pd;
 
     //views
@@ -76,20 +69,22 @@ public class ActivityGame extends AppCompatActivity {
     private FloatingActionButton profile_fab_edit_profile;
     private ProgressBar game_prb_progress;
     private RelativeLayout game_rel_background;
+
     //cardGame
     private CardGame cardGame;
-    //for timer
+
+    //timer
     private Timer timer;
     private final int DELAY = 1000;
+    //to indicate in what state we are (not to stop when not playing and get exception)
     private boolean playing;
 
     //firebase
     private FirebaseAuth firebaseAuth;
-    private FirebaseUser firebaseUser;
+    private FirebaseUser firebaseUser; //get user from auth
     private FirebaseDatabase firebaseDatabase;
-    private DatabaseReference databaseReference;
-    //storage
-    private StorageReference storageReference;
+    private DatabaseReference databaseReference; //get "User" reference from Database
+    private StorageReference storageReference;//file storage (for images)
 
     //********************************initialization
     @Override
@@ -101,6 +96,18 @@ public class ActivityGame extends AppCompatActivity {
         firebaseInit();
         //set assets from firebase
         updateViewsWithProfileData();
+    }
+
+    @Override
+    protected void onStop() {
+        //don't stop game if game is playing (like when on pause and pick picture
+        //will raise an exception if game on pause and going into stopGame())
+        if (playing) {
+            stopGame();
+        }
+        playing = false;
+        game_button_play_turn.setImageResource(R.drawable.play);
+        super.onStop();
     }
 
     private void findViews() {
@@ -123,7 +130,7 @@ public class ActivityGame extends AppCompatActivity {
         //set new game
         cardGame = new CardGame();
         //initialize p1/2imageUrl to "" so if its empty take default images
-        //set click listener to play button
+        //set click listener to play pause button
         game_button_play_turn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -141,7 +148,7 @@ public class ActivityGame extends AppCompatActivity {
         //progress dialog
         pd = new ProgressDialog(ActivityGame.this);
 
-        //final copy of the activity
+        //final copy of the activity to pass to click listener
         final AppCompatActivity activity = this;
 
         //set edit floating bubble listener
@@ -149,7 +156,7 @@ public class ActivityGame extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //options to show in dialog
-                String options[] = {"edit left picture", "edit right image", "Edit left name", "Edit right name"};
+                String options[] = {"Edit left picture", "Edit right image", "Edit left name", "Edit right name"};
                 //creating a dialog and build it
                 AlertDialog.Builder builder = new AlertDialog.Builder(ActivityGame.this);
                 //set title
@@ -218,18 +225,6 @@ public class ActivityGame extends AppCompatActivity {
         storageReference = FirebaseStorage.getInstance().getReference();//firebase storage reference
     }
 
-    @Override
-    protected void onStop() {
-        //don't stop game if game is playing (like when on pause and pick picture
-        //will raise an exception if game on pause and going into stopGame())
-        if (playing) {
-            stopGame();
-        }
-        playing = false;
-        game_button_play_turn.setImageResource(R.drawable.play);
-        super.onStop();
-    }
-
     //********************timer functions for game
     private void playGame() {
         timer = new Timer();
@@ -296,7 +291,7 @@ public class ActivityGame extends AppCompatActivity {
                         PermissionManager.getInstance().pickFromCamera(this);
                     } else {
                         //permission denied
-                        MySignal.getInstance().MakeToastMsgLong("please enable camera & storage permissions");
+                        MySignal.getInstance().longToast("please enable camera & storage permissions");
                     }
                 }
             }
@@ -309,7 +304,7 @@ public class ActivityGame extends AppCompatActivity {
                         PermissionManager.getInstance().pickFromGallery(this);
                     } else {
                         //permission denied
-                        MySignal.getInstance().MakeToastMsgShort("please enable storage permissions");
+                        MySignal.getInstance().shortToast("please enable storage permissions");
                     }
                 }
             }
@@ -420,14 +415,14 @@ public class ActivityGame extends AppCompatActivity {
                         public void onSuccess(Void aVoid) {
                             //url of image stored in Users realtime database successfully - dismiss progress bar
                             pd.dismiss();
-                            MySignal.getInstance().MakeToastMsgShort("image updated...");
+                            MySignal.getInstance().shortToast("image updated...");
                         }
                     }).addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
                             //error adding url to realtime database for user - dismiss progressbar
                             pd.dismiss();
-                            MySignal.getInstance().MakeToastMsgShort("error updating image...");
+                            MySignal.getInstance().shortToast("error updating image...");
 
                         }
                     });
@@ -435,7 +430,7 @@ public class ActivityGame extends AppCompatActivity {
                 } else {
                     //error in uploading to storage
                     pd.dismiss();
-                    MySignal.getInstance().MakeToastMsgShort("error in image uploading");
+                    MySignal.getInstance().shortToast("error in image uploading");
                 }
             }
         }).addOnFailureListener(new OnFailureListener() {
@@ -443,7 +438,7 @@ public class ActivityGame extends AppCompatActivity {
             public void onFailure(@NonNull Exception e) {
                 //there was an error(s), get and show error, dismiss progress dialog
                 pd.dismiss();
-                MySignal.getInstance().MakeToastMsgLong(e.getMessage());
+                MySignal.getInstance().longToast(e.getMessage());
 
             }
         });
@@ -476,17 +471,17 @@ public class ActivityGame extends AppCompatActivity {
                         @Override
                         public void onSuccess(Void aVoid) {
                             pd.dismiss();
-                            MySignal.getInstance().MakeToastMsgShort("Updated...");
+                            MySignal.getInstance().shortToast("Updated...");
                         }
                     }).addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
                             pd.dismiss();
-                            MySignal.getInstance().MakeToastMsgLong("" + e.getMessage());
+                            MySignal.getInstance().longToast("" + e.getMessage());
                         }
                     });
                 } else {
-                    MySignal.getInstance().MakeToastMsgShort("Please Enter Name");
+                    MySignal.getInstance().shortToast("Please Enter Name");
                 }
             }
         });

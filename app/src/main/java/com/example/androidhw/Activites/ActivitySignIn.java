@@ -10,14 +10,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
-import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.androidhw.R;
 import com.example.androidhw.utils.MySignal;
@@ -188,7 +186,7 @@ public class ActivitySignIn extends AppCompatActivity {
                 firebaseAuthWithGoogle(account.getIdToken());
             } catch (ApiException e) {
                 // Google Sign In failed, update UI appropriately
-                MySignal.getInstance().MakeToastMsgLong("Google Sign In failed");
+                MySignal.getInstance().longToast("Google Sign In failed");
             }
         }
     }
@@ -221,8 +219,8 @@ public class ActivitySignIn extends AppCompatActivity {
                         } else {
                             // If sign in fails, display a message to the user.
                             pd.dismiss();
-                            MySignal.getInstance().MakeToastMsgShort("Authentication Failed...");
-                            MySignal.getInstance().MakeToastMsgLong(task.getException().getMessage());
+                            MySignal.getInstance().shortToast("Authentication Failed...");
+                            MySignal.getInstance().longToast(task.getException().getMessage());
                         }
                     }
                 });
@@ -286,9 +284,9 @@ public class ActivitySignIn extends AppCompatActivity {
             public void onComplete(@NonNull Task<Void> task) {
                 pd.dismiss();
                 if(task.isSuccessful()){
-                    MySignal.getInstance().MakeToastMsgShort("Email sent");
+                    MySignal.getInstance().shortToast("Email sent");
                 }else{
-                    MySignal.getInstance().MakeToastMsgShort("Failed to send Email");
+                    MySignal.getInstance().shortToast("Failed to send Email");
                 }
             }
         }).addOnFailureListener(new OnFailureListener() {
@@ -296,7 +294,7 @@ public class ActivitySignIn extends AppCompatActivity {
             public void onFailure(@NonNull Exception e) {
                 pd.dismiss();
                 //get and show proper error massage
-                MySignal.getInstance().MakeToastMsgLong(""+e.getMessage());
+                MySignal.getInstance().longToast(""+e.getMessage());
             }
         });
 
@@ -320,7 +318,7 @@ public class ActivitySignIn extends AppCompatActivity {
                         } else {
                             // If sign in fails, display a message to the user.
                             pd.dismiss();
-                            MySignal.getInstance().MakeToastMsgShort("Authentication failed...");
+                            MySignal.getInstance().shortToast("Authentication failed...");
                         }
                     }
                 }).addOnFailureListener(new OnFailureListener(){
@@ -328,7 +326,7 @@ public class ActivitySignIn extends AppCompatActivity {
             public void onFailure(@NonNull Exception e) {
                 //error, dismiss progress dialog and get and show the error massage
                 pd.dismiss();
-                MySignal.getInstance().MakeToastMsgLong(""+e.getMessage());
+                MySignal.getInstance().longToast(""+e.getMessage());
             }
         });
     }

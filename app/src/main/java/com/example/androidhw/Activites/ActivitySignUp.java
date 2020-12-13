@@ -12,7 +12,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.androidhw.R;
 import com.example.androidhw.utils.MySignal;
@@ -129,7 +128,7 @@ public class ActivitySignUp extends AppCompatActivity {
                             //dismiss progress dialog
                             pd.dismiss();
                             // If sign in fails, display a message to the user.
-                            MySignal.getInstance().MakeToastMsgLong("Authentication failed.");
+                            MySignal.getInstance().longToast("Authentication failed.");
                         }
                     }
                 }).addOnFailureListener(new OnFailureListener() {
@@ -138,7 +137,7 @@ public class ActivitySignUp extends AppCompatActivity {
                 //dismiss progress dialog
                 pd.dismiss();
                 //error, get error and display it
-                MySignal.getInstance().MakeToastMsgShort(""+e.getMessage());
+                MySignal.getInstance().shortToast(""+e.getMessage());
             }
         });
     }

@@ -50,7 +50,10 @@ public class ActivityTopTen extends AppCompatActivity implements LocationCallbac
         LatLng location = new LatLng(lat, lon);
         fragmentMaps.getGoogleMap().addMarker(new MarkerOptions().position(location).title(name));
         //view and zoom changes
-        fragmentMaps.getGoogleMap().moveCamera(CameraUpdateFactory.newLatLng(location));
-        fragmentMaps.getGoogleMap().setMinZoomPreference((float)250.50);
+        fragmentMaps.getGoogleMap().moveCamera(CameraUpdateFactory.newLatLngZoom(location,15));
+        // Zoom in, animating the camera.
+        fragmentMaps.getGoogleMap().animateCamera(CameraUpdateFactory.zoomIn());
+        // Zoom out to zoom level 10, animating with a duration of 2 seconds.
+        fragmentMaps.getGoogleMap().animateCamera(CameraUpdateFactory.zoomTo(15), 2000, null);
     }
 }
