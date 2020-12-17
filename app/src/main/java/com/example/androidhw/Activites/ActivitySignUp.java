@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
@@ -129,6 +130,7 @@ public class ActivitySignUp extends AppCompatActivity {
                             pd.dismiss();
                             // If sign in fails, display a message to the user.
                             MySignal.getInstance().longToast("Authentication failed.");
+                            Log.d("pttt",task.getException().getMessage()+"");
                         }
                     }
                 }).addOnFailureListener(new OnFailureListener() {

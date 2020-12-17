@@ -55,18 +55,13 @@ import java.util.TimerTask;
 
 public class ActivityGame extends AppCompatActivity {
 
-    //variable to indicate what we are editing in firebase
-    private int playerNameEdit; //which player change name
-    private int playerImageEdit;//which player change image
-
     //progress dialog for image uploading
     ProgressDialog pd;
 
     //views
     private TextView game_lbl_score1, game_lbl_name1, game_lbl_score2, game_lbl_name2;
-    private ImageView game_imv_player1_card, game_imv_player2_card, game_imv_p1_avatar, game_imv_p2_avatar;
+    private ImageView game_imv_player1_card, game_imv_player2_card;
     private ImageButton game_button_play_turn;
-    private FloatingActionButton profile_fab_edit_profile;
     private ProgressBar game_prb_progress;
     private RelativeLayout game_rel_background;
 
@@ -75,16 +70,9 @@ public class ActivityGame extends AppCompatActivity {
 
     //timer
     private Timer timer;
-    private final int DELAY = 1000;
+    private final int DELAY = 200;
     //to indicate in what state we are (not to stop when not playing and get exception)
     private boolean playing;
-
-    //firebase
-    private FirebaseAuth firebaseAuth;
-    private FirebaseUser firebaseUser; //get user from auth
-    private FirebaseDatabase firebaseDatabase;
-    private DatabaseReference databaseReference; //get "User" reference from Database
-    private StorageReference storageReference;//file storage (for images)
 
     //********************************initialization
     @Override
@@ -93,9 +81,6 @@ public class ActivityGame extends AppCompatActivity {
         setContentView(R.layout.activity_game);
         findViews();
         init();
-        firebaseInit();
-        //set assets from firebase
-        updateViewsWithProfileData();
     }
 
     @Override
@@ -118,9 +103,6 @@ public class ActivityGame extends AppCompatActivity {
         game_imv_player1_card = findViewById(R.id.game_imv_player1_card);
         game_imv_player2_card = findViewById(R.id.game_imv_player2_card);
         game_button_play_turn = findViewById(R.id.game_button_play_turn);
-        profile_fab_edit_profile = findViewById(R.id.profile_fab_edit_profile);
-        game_imv_p1_avatar = findViewById(R.id.game_imv_p1_avatar);
-        game_imv_p2_avatar = findViewById(R.id.game_imv_p2_avatar);
         game_prb_progress = findViewById(R.id.game_prb_progress);
         game_rel_background = findViewById(R.id.game_rel_background);
     }
@@ -151,58 +133,6 @@ public class ActivityGame extends AppCompatActivity {
         //final copy of the activity to pass to click listener
         final AppCompatActivity activity = this;
 
-        //set edit floating bubble listener
-        profile_fab_edit_profile.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //options to show in dialog
-                String options[] = {"Edit left picture", "Edit right image", "Edit left name", "Edit right name"};
-                //creating a dialog and build it
-                AlertDialog.Builder builder = new AlertDialog.Builder(ActivityGame.this);
-                //set title
-                builder.setTitle("Edit Players Data");
-                //set items to dialog
-                builder.setItems(options, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        //handle dialog items click
-                        switch (which) {
-                            case 0: {
-                                //edit profile picture clicked
-                                playerImageEdit = 1; //indicate profile picture change
-                                pd.setMessage("Updating Left Image");
-                                PermissionManager.getInstance().showImagePicDialog(activity);
-                            }
-                            break;
-                            case 1: {
-                                playerImageEdit = 2; //indicate the player that changing change
-                                //edit cover photo clicked
-                                pd.setMessage("Updating Right Image");
-                                PermissionManager.getInstance().showImagePicDialog(activity);
-                            }
-                            break;
-                            case 2: {
-                                playerNameEdit = 1;
-                                //edit profile name clicked
-                                pd.setMessage("Updating Left Name");
-                                showNameUpdateDialogAndUpload();
-                            }
-                            break;
-                            case 3: {
-                                playerNameEdit = 2;
-                                //edit phone clicked
-                                pd.setMessage("Updating Right Name");
-                                showNameUpdateDialogAndUpload();
-                            }
-                            break;
-                        }
-                    }
-                });
-                //create dialog
-                builder.create().show();
-            }
-        });
-
         Glide.with(this).load(R.drawable.background).into(new SimpleTarget<Drawable>() {
             @Override
             public void onResourceReady(Drawable resource, Transition<? super Drawable> transition) {
@@ -214,15 +144,6 @@ public class ActivityGame extends AppCompatActivity {
 
         //play sound for game start
         MySignal.getInstance().play(R.raw.button_press);
-    }
-
-    private void firebaseInit() {
-        firebaseAuth = FirebaseAuth.getInstance();
-        firebaseUser = firebaseAuth.getCurrentUser();
-        firebaseDatabase = FirebaseDatabase.getInstance();
-        //where in bucket users are stored
-        databaseReference = firebaseDatabase.getReference("Users");
-        storageReference = FirebaseStorage.getInstance().getReference();//firebase storage reference
     }
 
     //********************timer functions for game
@@ -275,223 +196,5 @@ public class ActivityGame extends AppCompatActivity {
 
     private void stopGame() {
         timer.cancel();
-    }
-
-    //this methods runs when permission dialog closes with granted or denial access - only for the first times
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-            if(PermissionManager.getInstance().getCameraRequestCode() == requestCode) {
-                //picking from camera - check we have permissions
-                if (grantResults.length > 0) {
-                    boolean cameraAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
-                    boolean writeStorageAccepted = grantResults[1] == PackageManager.PERMISSION_GRANTED;
-                    if (cameraAccepted && writeStorageAccepted) {
-                        //permission granted
-                        PermissionManager.getInstance().pickFromCamera(this);
-                    } else {
-                        //permission denied
-                        MySignal.getInstance().longToast("please enable camera & storage permissions");
-                    }
-                }
-            }
-            else if(PermissionManager.getInstance().getStorageRequestCode()==requestCode) {
-                //picking from gallery - check we have permissions
-                if (grantResults.length > 0) {
-                    boolean writeStorageAccepted = grantResults[1] == PackageManager.PERMISSION_GRANTED;
-                    if (writeStorageAccepted) {
-                        //permission granted
-                        PermissionManager.getInstance().pickFromGallery(this);
-                    } else {
-                        //permission denied
-                        MySignal.getInstance().shortToast("please enable storage permissions");
-                    }
-                }
-            }
-    }
-
-    //this method will run after picking image from gallery or camera
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK) {
-            if (requestCode == PermissionManager.getInstance().getImagePickGalleryCode()) {
-                //image picked from gallery - get uri of image
-                PermissionManager.getInstance().setImage_uri(data.getData());
-                uploadImage(PermissionManager.getInstance().getImage_uri());
-            }
-            if (requestCode == PermissionManager.getInstance().getImagePickCameraCode()) {
-                //image picked from camera - get uri of image
-                uploadImage(PermissionManager.getInstance().getImage_uri());
-            }
-        }
-    }
-
-    //*********************************firebase related functionality
-    //fetching info of current user by id and update views
-    private void updateViewsWithProfileData() {
-        //using orderByChild query to get user that have uid that machs the current user uid
-        Query query = databaseReference.orderByChild("uid").equalTo(firebaseUser.getUid());
-        query.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                //checks until required data is back
-                for (DataSnapshot ds : snapshot.getChildren()) {
-                    //get data
-                    String p1image = "" + ds.child("p1image").getValue();
-                    String p2image = "" + ds.child("p2image").getValue();
-                    String p1name = "" + ds.child("p1name").getValue();
-                    String p2name = "" + ds.child("p2name").getValue();
-
-                    //set data
-                    if (!TextUtils.isEmpty(p1name)) {
-                        game_lbl_name1.setText(p1name);
-                    }
-                    if (!TextUtils.isEmpty(p2name)) {
-                        game_lbl_name2.setText(p2name);
-                    }
-
-                    if (!TextUtils.isEmpty(p1image)) {
-                        //to set profile image
-                        try {
-                            //if image is received
-                            Picasso.get().load(p1image).into(game_imv_p1_avatar);
-                        } catch (Exception e) {
-                            //if there are any exceptions show default pic
-                            Picasso.get().load(R.drawable.smile).into(game_imv_p1_avatar);
-                        }
-                    }
-                    if (!TextUtils.isEmpty(p2image)) {
-                        //to set profile image
-                        try {
-                            //if image is received
-                            Picasso.get().load(p2image).into(game_imv_p2_avatar);
-                        } catch (Exception e) {
-                            //if there are any exceptions show default pic
-                            Picasso.get().load(R.drawable.excuse).into(game_imv_p2_avatar);
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
-    }
-
-    private void uploadImage(Uri image_uri) {
-        //show progress
-        pd.show();
-
-        //path and name of image that will be stored in firebase
-        //examples for imagePathAndName:
-        //left_052982309840
-        //right_052982309840
-        String imagePathAndName = "Users_photoes_" + "_" + FirebaseAuth.getInstance().getUid();
-        //creating new cluster in storage with the specified path
-        StorageReference sr2 = storageReference.child(imagePathAndName).child(imagePathAndName + playerImageEdit);
-        //saving the image on to it
-        sr2.putFile(image_uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                //image was uploaded to storage - now get url and store it in Users database
-                Task<Uri> uriTask = taskSnapshot.getStorage().getDownloadUrl();
-                while (!uriTask.isSuccessful()) ;
-                Uri uri = uriTask.getResult();
-
-                //check if image was uploaded or not and that a url was received
-                if (uriTask.isSuccessful()) {
-                    //image upload - add / update image in Users database
-                    HashMap<String, Object> result = new HashMap<>();
-                    //first parameter is profileOrCoverPhoto that can be "image" or "cover"
-                    //which are keys in Users database and url of image will be saved in one of theme
-                    //second parameter is the url string
-                    result.put("p" + playerImageEdit + "image" + "", uri.toString());
-                    //the first reference that points to Users - get user that matches firebaseUser uid
-                    databaseReference.child(FirebaseAuth.getInstance().getUid()).updateChildren(result).addOnSuccessListener(new OnSuccessListener<Void>() {
-                        @Override
-                        public void onSuccess(Void aVoid) {
-                            //url of image stored in Users realtime database successfully - dismiss progress bar
-                            pd.dismiss();
-                            MySignal.getInstance().shortToast("image updated...");
-                        }
-                    }).addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            //error adding url to realtime database for user - dismiss progressbar
-                            pd.dismiss();
-                            MySignal.getInstance().shortToast("error updating image...");
-
-                        }
-                    });
-
-                } else {
-                    //error in uploading to storage
-                    pd.dismiss();
-                    MySignal.getInstance().shortToast("error in image uploading");
-                }
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                //there was an error(s), get and show error, dismiss progress dialog
-                pd.dismiss();
-                MySignal.getInstance().longToast(e.getMessage());
-
-            }
-        });
-    }
-
-    private void showNameUpdateDialogAndUpload() {
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(ActivityGame.this);
-        alertDialog.setTitle("Update Name");
-        LinearLayout linearLayout = new LinearLayout(ActivityGame.this);
-        linearLayout.setOrientation(LinearLayout.VERTICAL);
-        linearLayout.setPadding(10, 10, 10, 10);
-        //add edit text
-        EditText editText = new EditText(ActivityGame.this);
-        editText.setHint("Enter Name");
-        linearLayout.addView(editText);
-        alertDialog.setView(linearLayout);
-
-        //add button in dialog
-        alertDialog.setPositiveButton("Update", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                //input text from edit text
-                String value = editText.getText().toString().trim();
-                //validate that a user has entered something
-                if (!TextUtils.isEmpty(value)) {
-                    pd.show();
-                    HashMap<String, Object> result = new HashMap<>();
-                    result.put("p" + playerNameEdit + "name", value);
-                    databaseReference.child(FirebaseAuth.getInstance().getUid()).updateChildren(result).addOnSuccessListener(new OnSuccessListener<Void>() {
-                        @Override
-                        public void onSuccess(Void aVoid) {
-                            pd.dismiss();
-                            MySignal.getInstance().shortToast("Updated...");
-                        }
-                    }).addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            pd.dismiss();
-                            MySignal.getInstance().longToast("" + e.getMessage());
-                        }
-                    });
-                } else {
-                    MySignal.getInstance().shortToast("Please Enter Name");
-                }
-            }
-        });
-        alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-        //create and show dialog
-        alertDialog.create().show();
     }
 }

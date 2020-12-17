@@ -25,10 +25,10 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="@string/google_maps_key" />
+            android:value="AIzaSyCs1ehKEHgLOXLPMWtaFPsLzJCyNRcVj4c" />
 
         <activity android:name=".Activites.ActivityTopTen" />
-        <activity android:name=".Activites.ActivityMenu" />
+<!--        <activity android:name=".Activites.ActivityMenu" />-->
         <activity
             android:name=".Activites.ActivityGameOver"
             android:screenOrientation="sensorPortrait" />
@@ -42,7 +42,7 @@
             android:name=".Activites.ActivitySignIn"
             android:screenOrientation="sensorPortrait" />
         <activity
-            android:name=".Activites.ActivityMain"
+            android:name=".Activites.ActivityMenu"
             android:screenOrientation="sensorPortrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
